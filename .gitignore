@@ -1,0 +1,41 @@
+# Entorno virtual
+venv/
+.env/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+
+# Jupyter
+.ipynb_checkpoints
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Datos (no subir datasets crudos o pesados)
+data/raw/*
+data/processed/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+
+# Configuración sensible (DB credentials, etc.)
+.env
+config.py
+
+# SQL (opcional: si generas dumps grandes)
+*.sql.dump
+
+# IDEs
+.vscode/
+.idea/
+
+# Reportes generados
+reports/*.pdf
+reports/*.png
