@@ -84,17 +84,11 @@ def transform(catalog, web, products):
 
     catalog_clean, web_clean, products_clean = cleaned
 
-    # =========================
-    # INTEGRACIÓN
-    # =========================
-
-    # Unir órdenes catalog + web
     orders = pd.concat(
         [catalog_clean, web_clean],
         ignore_index=True
     )
 
-    # Unir con productos usando PCODE
     final_df = orders.merge(
         products_clean,
         on="PCODE",
