@@ -1,6 +1,6 @@
 from extract import extract
+from load import create_tables, load_data
 from transform import transform
-from load import load
 
 
 def main():
@@ -10,11 +10,10 @@ def main():
 
     # Transform
     final_df = transform(catalog, web, products)
-
-    print(final_df.head())
-
+    
+    create_tables()
     # Load
-    load(final_df)
+    load_data(final_df)
 
 
 if __name__ == "__main__":

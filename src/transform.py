@@ -7,7 +7,12 @@ def clean_columns(df):
     - elimina espacios
     - convierte a mayúsculas
     """
-    df.columns = df.columns.str.strip().str.upper()
+    df.columns = (
+        df.columns
+        .str.strip()
+        .str.upper()
+    )
+
     return df
 
 
@@ -17,18 +22,49 @@ def clean_qty(df):
     Valores inválidos -> NaN
     """
     if "QTY" in df.columns:
-        df["QTY"] = pd.to_numeric(df["QTY"], errors="coerce")
+        df["QTY"] = pd.to_numeric(
+            df["QTY"],
+            errors="coerce"
+        )
 
     return df
 
 
-def clean_dates(df):
+def clean_dates(df, dataset_name=None):
     """
-    Convierte DATE a datetime.
-    Fechas inválidas -> NaT
+    Convierte DATE a datetime según el dataset.
     """
-    if "DATE" in df.columns:
-        df["DATE"] = pd.to_datetime(df["DATE"], errors="coerce")
+
+    if "DATE" not in df.columns:
+        return df
+
+    # Catalog_Orders.txt
+    # formato: month/year/day
+    # ejemplo: 3/97/7 00:00:00
+    if dataset_name == "catalog":
+
+        df["DATE"] = pd.to_datetime(
+            df["DATE"],
+            format="%m/%y/%d %H:%M:%S",
+            errors="coerce"
+        )
+
+    # Web_orders.txt
+    # formato: day/month/year
+    # ejemplo: 17/12/2000 00:00:00
+    elif dataset_name == "web":
+
+        df["DATE"] = pd.to_datetime(
+            df["DATE"],
+            format="%d/%m/%Y %H:%M:%S",
+            errors="coerce"
+        )
+
+    else:
+        df["DATE"] = pd.to_datetime(
+            df["DATE"],
+            errors="coerce"
+        )
 
     return df
 
@@ -37,7 +73,9 @@ def clean_catalog(df):
     """
     Normaliza valores de CATALOG.
     """
+
     if "CATALOG" in df.columns:
+
         df["CATALOG"] = (
             df["CATALOG"]
             .astype(str)
@@ -52,6 +90,7 @@ def remove_duplicates(df):
     """
     Elimina registros duplicados.
     """
+
     return df.drop_duplicates()
 
 
@@ -59,6 +98,7 @@ def remove_nulls(df):
     """
     Elimina filas completamente vacías.
     """
+
     return df.dropna(how="all")
 
 
@@ -67,30 +107,51 @@ def transform(catalog, web, products):
     Pipeline de transformación ETL.
     """
 
+    # =========================
+    # CLEAN CATALOG
+    # =========================
 
-    datasets = [catalog, web, products]
+    catalog = clean_columns(catalog)
+    catalog = clean_qty(catalog)
+    catalog = clean_dates(catalog, "catalog")
+    catalog = clean_catalog(catalog)
+    catalog = remove_duplicates(catalog)
+    catalog = remove_nulls(catalog)
 
-    cleaned = []
+    # =========================
+    # CLEAN WEB
+    # =========================
 
-    for df in datasets:
-        df = clean_columns(df)
-        df = clean_qty(df)
-        df = clean_dates(df)
-        df = clean_catalog(df)
-        df = remove_duplicates(df)
-        df = remove_nulls(df)
+    web = clean_columns(web)
+    web = clean_qty(web)
+    web = clean_dates(web, "web")
+    web = clean_catalog(web)
+    web = remove_duplicates(web)
+    web = remove_nulls(web)
 
-        cleaned.append(df)
+    # =========================
+    # CLEAN PRODUCTS
+    # =========================
 
-    catalog_clean, web_clean, products_clean = cleaned
+    products = clean_columns(products)
+    products = remove_duplicates(products)
+    products = remove_nulls(products)
+
+    # =========================
+    # INTEGRATE ORDERS
+    # =========================
 
     orders = pd.concat(
-        [catalog_clean, web_clean],
+        [catalog, web],
         ignore_index=True
     )
 
+    # =========================
+    # JOIN PRODUCTS
+    # =========================
+
     final_df = orders.merge(
-        products_clean,
+        products,
         on="PCODE",
         how="left"
     )
